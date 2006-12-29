@@ -9,3 +9,4 @@ lib/Acme/6502/Tube.pm
 t/00.load.t
 t/pod-coverage.t
 t/pod.t
+Roms/Forth-2.5.rom

@@ -4,10 +4,12 @@ use warnings;
 use strict;
 use Carp;
 use Class::Std;
+use Class::Std::Slots;
 use Time::HiRes qw(time);
+use Term::ReadKey;
 use base qw(Acme::6502);
 
-use version; our $VERSION = qv('0.0.1');
+use version; our $VERSION = qv('0.0.5');
 
 use constant ERROR => 0xF800;
 
@@ -38,7 +40,11 @@ use constant {
     OSCLI  => 0xFFF7
 };
 
-my %os : ATTR;
+signals qw(
+    pre_os post_os
+);
+
+my %os      : ATTR;
 
 sub BUILD {
     my ($self, $id, $args) = @_;
@@ -120,6 +126,10 @@ sub BUILD {
         }
     };
 
+    my $set_escape = sub {
+        $self->write_8(0xFF, 0xFF);
+    };
+
     my $osword = sub {
         my $a   = $self->get_a();
         my $blk = $self->get_xy();
@@ -165,7 +175,20 @@ sub BUILD {
     };
 
     my $osrdch = sub {
-        die "OSRDCH not handled\n";
+        ReadMode(4);
+        eval {
+            my $k = ord(ReadKey(0));
+            $k = 0x0D if $k == 0x0A;
+            $self->set_a($k);
+            if ($k == 27) {
+                $set_escape->();
+                $self->set_p($self->get_p() | $self->C);
+            } else {
+                $self->set_p($self->get_p() & ~$self->C);
+            }
+        };
+        ReadMode(0);
+        die $@ if $@;
     };
 
     my $osfile = sub {
@@ -230,32 +253,28 @@ sub BUILD {
     };
 
     my $make_vector = sub {
-        my ($addr, $vec, $code) = @_;
+        my ($name, $vec, $code) = @_;
+        my $addr = eval $name;
+        die $@ if $@;
         my $vecno = scalar @{$os{$id}};
-        push @{$os{$id}}, $code;
+        push @{$os{$id}}, [ $code, $name ];
         $self->make_vector($addr, $vec, $vecno);
     };
 
-    $make_vector->(OSCLI,  0x208, $oscli);
-    $make_vector->(OSBYTE, 0x20A, $osbyte);
-    $make_vector->(OSWORD, 0x20C, $osword);
-    $make_vector->(OSWRCH, 0x20E, $oswrch);
-    $make_vector->(OSRDCH, 0x210, $osrdch);
-    $make_vector->(OSFILE, 0x212, $osfile);
-    $make_vector->(OSARGS, 0x214, $osargs);
-    $make_vector->(OSBGET, 0x216, $osbget);
-    $make_vector->(OSBPUT, 0x218, $osbput);
-    $make_vector->(OSGBPB, 0x21A, $osgbpb);
-    $make_vector->(OSFIND, 0x21C, $osfind);    
-}
+    $self->set_jumptab(0xFA00);
 
-# load_rom('BASIC2.rom', 0x8000);
-# $pc = 0x8000;
-# $a  = 0x01;
-# $s  = 0xFF;
-# $p  = 0x22;
-# run(2000_000) while 1;
-# #trace(2000_000);
+    $make_vector->('OSCLI',  0x208, $oscli);
+    $make_vector->('OSBYTE', 0x20A, $osbyte);
+    $make_vector->('OSWORD', 0x20C, $osword);
+    $make_vector->('OSWRCH', 0x20E, $oswrch);
+    $make_vector->('OSRDCH', 0x210, $osrdch);
+    $make_vector->('OSFILE', 0x212, $osfile);
+    $make_vector->('OSARGS', 0x214, $osargs);
+    $make_vector->('OSBGET', 0x216, $osbget);
+    $make_vector->('OSBPUT', 0x218, $osbput);
+    $make_vector->('OSGBPB', 0x21A, $osgbpb);
+    $make_vector->('OSFIND', 0x21C, $osfind);    
+}
 
 sub call_os {
     my $self = shift;
@@ -263,9 +282,11 @@ sub call_os {
     my $i    = shift;
 
     eval {
-        die "Bad OS call $i\n"
-            unless exists $os{$id}->[$i];
-        $os{$id}->[$i]->();
+        my $call = $os{$id}->[$i] || die "Bad OS call $i\n";
+
+        $self->pre_os($call->[1]);
+        $call->[0]->();
+        $self->post_os($call->[1]);
     };
 
     if ($@) {
@@ -274,6 +295,7 @@ sub call_os {
         $err =~ s/\s+/ /;
         $err =~ s/^\s+//;
         $err =~ s/\s+$//;
+        warn $err;
         my $ep = ERROR + 2;
         for (map ord, split //, $err) {
             $self->write_8($ep++, $_);
@@ -288,99 +310,64 @@ __END__
 
 =head1 NAME
 
-Acme::6502 - Pure Perl 65C02 simulator.
+Acme::6502::Tube - Acorn 65C02 Second Processor Simulator
 
 =head1 VERSION
 
-This document describes Acme::6502 version 0.0.1
+This document describes Acme::6502::Tube version 0.0.5
 
 =head1 SYNOPSIS
 
-    use Acme::6502;
+    use Acme::6502::Tube;
 
-=for author to fill in:
-    Brief code example(s) here showing commonest usage(s).
-    This section will be as far as many users bother reading
-    so make it as educational and exeplary as possible.
+    my $cpu = Acme::6502::Tube->new();
+
+    # Load BBC Basic
+    $cpu->load_rom('BASIC2.rom', 0x8000);
+
+    # Init registers
+    $cpu->set_pc(0x8000);
+    $cpu->set_a(0x01);
+    $cpu->set_s(0xFF);
+    $cpu->set_p(0x22);
+
+    # Run
+    $cpu->run(2000_000) while 1;
   
 =head1 DESCRIPTION
 
-=for author to fill in:
-    Write a full description of the module and its features here.
-    Use subsections (=head2, =head3) as appropriate.
+Emulates an Acorn BBC Micro 6502 Tube second processor. You'll need
+to find your own language ROM to load and it's only been tested with
+BBC Basic II.
 
 =head1 INTERFACE 
 
-=over
-
-=item C<call_os()>
-
-=back
-
-=for author to fill in:
-    List every single error and warning message that the module can
-    generate (even the ones that will "never happen"), with a full
-    explanation of each problem, one or more likely causes, and any
-    suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+See L<Acme::6502>. C<Acme::6502::Tube> is an C<Acme::6502> instance that
+has been initialised with a skeleton Tube OS.
 
 =head1 CONFIGURATION AND ENVIRONMENT
-
-=for author to fill in:
-    A full explanation of any configuration system(s) used by the
-    module, including the names and locations of any configuration
-    files, and the meaning of any environment variables or properties
-    that can be set. These descriptions must also include details of any
-    configuration language used.
   
 Acme::6502 requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-=for author to fill in:
-    A list of all the other modules that this module relies upon,
-    including any restrictions on versions, and an indication whether
-    the module is part of the standard Perl distribution, part of the
-    module's distribution, or must be installed separately. ]
-
-None.
+C<Acme::6502>
 
 =head1 INCOMPATIBILITIES
-
-=for author to fill in:
-    A list of any modules that this module cannot be used in conjunction
-    with. This may be due to name conflicts in the interface, or
-    competition for system or program resources, or due to internal
-    limitations of Perl (for example, many modules that use source code
-    filters are mutually incompatible).
 
 None reported.
 
 =head1 BUGS AND LIMITATIONS
 
-=for author to fill in:
-    A list of known problems with the module, together with some
-    indication Whether they are likely to be fixed in an upcoming
-    release. Also a list of restrictions on the features the module
-    does provide: data types that cannot be handled, performance issues
-    and the circumstances in which they may arise, practical
-    limitations on the size of data sets, special cases that are not
-    (yet) handled, etc.
+Tube OS emulation is very minimal - just enough to run BBC Basic II. If
+you extend it let me know.
 
-No bugs have been reported.
+I've included the HCCS Forth ROM in the distribution (I used to work for
+HCCS and did a little work on the Forth ROM - although Joe Brown wrote
+it). Unfortunately it doesn't currently work with C<Acme::6502::Tube> -
+so that'll have to wait for another day.
+
+Once the Forth ROM works I'll use it to write some tests.
 
 Please report any bugs or feature requests to
 C<bug-acme-6502@rt.cpan.org>, or through the web interface at

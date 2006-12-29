@@ -1,5 +1,18 @@
 Revision history for Acme-6502
 
-0.0.1  Mon Dec 18 14:17:14 2006
-       Initial release.
+0.0.1   2006-12-18
+        Initial release.
+       
+0.0.2   2006-12-18
+        Added Class::Std to prereqs
 
+0.0.3   2006-12-18
+        Added kludgy OSRDCH support. Forth sort of works now.
+        Added OSCALL tracing to Tube.pm
+
+0.0.4   2006-12-19
+        Fixed module name in POD for Acme::6502::Tube
+
+0.0.5   2006-12-19
+        Replaced hardwired tracing with signals thrown before /
+        after OS calls

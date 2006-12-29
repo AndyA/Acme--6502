@@ -5,7 +5,7 @@ use strict;
 use Carp;
 use Class::Std;
 
-use version; our $VERSION = qv('0.0.1');
+use version; our $VERSION = qv('0.0.5');
 
 # CPU flags
 use constant {
@@ -19,6 +19,8 @@ use constant {
     C => 0x01
 };
 
+use constant FLAGS => 'NVRBDIZC';
+ 
 # Other CPU constants
 use constant {
     STACK => 0x0100,
@@ -41,10 +43,10 @@ sub BUILD {
     my ($a, $x, $y, $s, $p, $pc) = (0) x 6;
 
     # Page used to allocate vector thunks
-    my $jumptab = $args->{jump_page} || 0xFA00;
+    my $jumptab = $args->{jumptab} || 0xFA00;
 
     my $bad_inst = sub {
-        die sprintf("Bad instruction at &%04x (&%02x)\n",
+        croak sprintf("Bad instruction at &%04x (&%02x)\n",
             $pc - 1, $mem[$pc - 1]);
     };
 
@@ -324,6 +326,9 @@ sub BUILD {
         $bad_inst                              # FF BBS7 rel
     );
 
+    confess "Escape handler opcode not available"
+        unless $decode[ESCAPE_OP] == $bad_inst;
+
     # Patch in the OS escape op handler
     $decode[ESCAPE_OP] = sub {
         if ($mem[$pc] != ESCAPE_SIG) {
@@ -335,6 +340,10 @@ sub BUILD {
     };
 
     $cpu{$id} = {
+        set_jumptab => sub {
+            $jumptab = shift;
+        },
+        
         read_str => sub {
             my $addr = shift;
             my $str  = '';
@@ -384,8 +393,8 @@ sub BUILD {
 
         write_32 => sub {
             my ($addr, $val) = @_;
-            $mem[$addr + 0] = ($val >> 0) & 0xFF;
-            $mem[$addr + 1] = ($val >> 8) & 0xFF;
+            $mem[$addr + 0] = ($val >>  0) & 0xFF;
+            $mem[$addr + 1] = ($val >>  8) & 0xFF;
             $mem[$addr + 2] = ($val >> 16) & 0xFF;
             $mem[$addr + 3] = ($val >> 24) & 0xFF;
         },
@@ -422,7 +431,7 @@ sub BUILD {
 
         make_vector => sub {
             my ($call, $vec, $func) = @_;
-            $mem[$call + 0] = 0x6C;                 # JMP ()
+            $mem[$call + 0] = 0x6C;                 # JMP (indirect)
             $mem[$call + 1] = $vec & 0xFF;
             $mem[$call + 2] = ($vec >> 8) & 0xFF;
 
@@ -448,9 +457,23 @@ sub BUILD {
             my $v = shift;
             $x = $v & 0xFF;
             $y = ($v >> 8) & 0xFF;
+        },
+        
+        decode_flags => sub {
+            my $f = shift;
+            my $b = 0x80;
+            my $n = FLAGS;
+            my $desc = '';
+            while ($n) {
+                $desc .= ($f & $b) ? substr($n, 0, 1) : '-';
+                $n = substr($n, 1);
+                $b >>= 1;
             }
+            return $desc;
+        }
     };
 
+    # Generate register accessors.
     for my $reg (qw(a x y s p pc)) {
         $cpu{$id}->{"get_$reg"} = eval "sub { return \$$reg; }";
         $cpu{$id}->{"set_$reg"} = eval "sub { \$$reg = \$_[0]; }";
@@ -464,7 +487,7 @@ sub AUTOMETHOD {
     if (exists($cpu{$id}->{$methname})) {
         return sub {
             return $cpu{$id}->{$methname}->(@args);
-            }
+        }
     }
 
     return;
@@ -477,7 +500,6 @@ sub call_os {
 }
 
 # Functions that generate code fragments
-
 sub _push {
     my $r = '';
     for (@_) {
@@ -573,7 +595,6 @@ sub _acc {
 }
 
 sub _rel {
-
     # Doesn't return an lvalue
     return ('my $t = $mem[$pc++];' . "\n",
         '($pc + $t - (($t & 0x80) ? 0x100 : 0))');
@@ -791,97 +812,202 @@ Acme::6502 - Pure Perl 65C02 simulator.
 
 =head1 VERSION
 
-This document describes Acme::6502 version 0.0.1
+This document describes Acme::6502 version 0.0.5
 
 =head1 SYNOPSIS
 
     use Acme::6502;
-
-=for author to fill in:
-    Brief code example(s) here showing commonest usage(s).
-    This section will be as far as many users bother reading
-    so make it as educational and exeplary as possible.
+    
+    my $cpu = Acme::6502->new();
+    
+    # Set start address
+    $cpu->set_pc(0x8000);
+    
+    # Load ROM image
+    $cpu->load_rom('myrom.rom', 0x8000);
+    
+    # Run for 1,000,000 instructions then return
+    $cpu->run(1_000_000);
   
 =head1 DESCRIPTION
 
-=for author to fill in:
-    Write a full description of the module and its features here.
-    Use subsections (=head2, =head3) as appropriate.
+Imagine the nightmare scenario: your boss tells you about a legacy
+system you have to support. How bad could it be? COBOL? Fortran? Worse:
+it's an embedded 6502 system run by a family of squirrels (see Dilberts
+passim). Fortunately there's a pure Perl 6502 emulator that works so
+well the squirrels will never know the difference.
 
 =head1 INTERFACE 
 
 =over
 
-=item C<call_os()>
+=item C<call_os( $vec_number )>
+
+Subclass to provide OS entry points. OS vectors are installed by calling
+C<make_vector>. When the vector is called C<call_os()> will be called
+with the vector number.
+
+=item C<get_a()>
+
+Read the current value of the processor A register (accumulator).
+
+=item C<get_p()>
+
+Read the current value of the processor status register.
+
+=item C<get_pc()>
+
+Read the current value of the program counter.
+
+=item C<get_s()>
+
+Read the current value of the stack pointer.
+
+=item C<get_x()>
+
+Read the current value of the processor X index register.
+
+=item C<get_y()>
+
+Read the current value of the processor X index register.
+
+=item C<get_xy()>
+
+Read the value of X and Y as a sixteen bit number. X forms the lower 8
+bits of the value and Y forms the upper 8 bits.
+
+=item C<get_state()>
+
+Returns an array containing the values of the A, X, Y, S, P and SP.
+
+=item C<set_a( $value )>
+
+Set the value of the processor A register (accumulator).
+
+=item C<set_p( $value )>
+
+Set the value of the processor status register.
+
+=item C<set_pc( $value )>
+
+Set the value of the program counter.
+
+=item C<set_s( $value )>
+
+Set the value of the stack pointer.
+
+=item C<set_x( $value )>
+
+Set the value of the X index register.
+
+=item C<set_y( $value )>
+
+Set the value of the Y index register.
+
+=item C<set_xy( $value )>
+
+Set the value of the X and Y registers to the specified sixteen bit
+number. X gets the lower 8 bits, Y gets the upper 8 bits.
+
+=item C<set_jumptab( $addr )>
+
+Set the address of the block of memory that will be used to hold the
+thunk blocks that correspond with vectored OS entry points. Each thunk
+takes four bytes.
+
+=item C<load_rom( $filename, $addr )>
+
+Load a ROM image at the specified address.
+
+=item C<make_vector( $jmp_addr, $vec_addr, $vec_number )>
+
+Make a vectored entry point for an emulated OS. C<$jmp_addr> is the
+address where an indirect JMP instruction (6C) will be placed,
+C<$vec_addr> is the address of the vector and C<$vec_number> will be
+passed to C<call_os> when the OS call is made.
+
+=item C<poke_code( $addr, @bytes )>
+
+Poke code directly at the specified address.
+
+=item C<read_8( $addr )>
+
+Read a byte at the specified address.
+
+=item C<read_16( $addr )>
+
+Read a sixteen bit (low, high) word at the specified address.
+
+=item C<read_32( $addr )>
+
+Read a 32 bit word at the specified address.
+
+=item C<read_chunk( $start, $end )>
+
+Read a chunk of data from C<$start> to C<$end> - 1 into a string.
+
+=item C<read_str( $addr )>
+
+Read a carriage return terminated (0x0D) string from the
+specified address.
+
+=item C<run( $count [, $callback ] )>
+
+Execute the specified number of instructions and return. Optionally a
+callback may be provided in which case it will be called before each
+instruction is executed:
+
+    my $cb = sub {
+        my ($pc, $inst, $a, $x, $y, $s, $p) = @_;
+        # Maybe output trace info
+    }
+    
+    $cpu->run(100, $cb);
+
+=item C<write_8( $addr, $value )>
+
+Write the byte at the specified address.
+
+=item C<write_16( $addr, $value )>
+
+Write a sixteen bit (low, high) value at the specified address.
+
+=item C<write_32( $addr, $value )>
+
+Write a 32 bit value at the specified address.
+
+=item C<write_chunk( $addr, $string )>
+
+Write a chunk of data to memory.
 
 =back
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-    List every single error and warning message that the module can
-    generate (even the ones that will "never happen"), with a full
-    explanation of each problem, one or more likely causes, and any
-    suggested remedies.
-
 =over
 
-=item C<< Error message here, perhaps with %s placeholders >>
+=item C<< Bad instruction at %s (%s) >>
 
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
+The emulator hit an illegal 6502 instruction.
 
 =back
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-=for author to fill in:
-    A full explanation of any configuration system(s) used by the
-    module, including the names and locations of any configuration
-    files, and the meaning of any environment variables or properties
-    that can be set. These descriptions must also include details of any
-    configuration language used.
-  
 Acme::6502 requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-=for author to fill in:
-    A list of all the other modules that this module relies upon,
-    including any restrictions on versions, and an indication whether
-    the module is part of the standard Perl distribution, part of the
-    module's distribution, or must be installed separately. ]
-
-None.
+C<Acme::6502> needs C<Class::Std>.
 
 =head1 INCOMPATIBILITIES
-
-=for author to fill in:
-    A list of any modules that this module cannot be used in conjunction
-    with. This may be due to name conflicts in the interface, or
-    competition for system or program resources, or due to internal
-    limitations of Perl (for example, many modules that use source code
-    filters are mutually incompatible).
 
 None reported.
 
 =head1 BUGS AND LIMITATIONS
 
-=for author to fill in:
-    A list of known problems with the module, together with some
-    indication Whether they are likely to be fixed in an upcoming
-    release. Also a list of restrictions on the features the module
-    does provide: data types that cannot be handled, performance issues
-    and the circumstances in which they may arise, practical
-    limitations on the size of data sets, special cases that are not
-    (yet) handled, etc.
-
-No bugs have been reported.
+Doesn't have support for hardware emulation hooks - so memory mapped I/O
+is out of the question until someone fixes it.
 
 Please report any bugs or feature requests to
 C<bug-acme-6502@rt.cpan.org>, or through the web interface at
