@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>Build.PL</string>
+	<string>Changes</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -26,9 +26,23 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>29</integer>
+				<integer>17</integer>
 				<key>line</key>
-				<integer>6</integer>
+				<integer>10</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+		</dict>
+		<key>Changes</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>21</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -54,10 +68,11 @@
 	<array>
 		<string>Makefile.PL</string>
 		<string>Build.PL</string>
+		<string>Changes</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{19, 45}, {1022, 769}}</string>
+	<string>{{14, 49}, {1022, 769}}</string>
 </dict>
 </plist>
