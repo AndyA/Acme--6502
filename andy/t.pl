@@ -1,9 +1,4 @@
 #!/usr/bin/perl -w
-#
-#  t
-#
-#  Created by Andy Armstrong on 2006-12-18.
-#  Copyright (c) 2006 Hexten. All rights reserved.
 
 use strict;
 use Data::Dumper;
@@ -24,8 +19,8 @@ my $trace = sub {
         $pos, $name, $a, $x, $y, $s, $p, $pc);
 };
 
-$cpu->connect('pre_os',  sub { $trace->('before', @_); });
-$cpu->connect('post_os', sub { $trace->('after',  @_);  });
+#$cpu->connect('pre_os',  sub { $trace->('before', @_); });
+#$cpu->connect('post_os', sub { $trace->('after',  @_);  });
 
 my $rom = shift || 'Roms/Forth-2.5.rom';
 
