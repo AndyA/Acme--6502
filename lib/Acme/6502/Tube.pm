@@ -9,7 +9,7 @@ use Time::HiRes qw(time);
 use Term::ReadKey;
 use base qw(Acme::6502);
 
-our $VERSION = qv('0.70');
+our $VERSION = qv('0.71');
 
 use constant ERROR => 0xF800;
 
@@ -314,7 +314,7 @@ Acme::6502::Tube - Acorn 65C02 Second Processor Simulator
 
 =head1 VERSION
 
-This document describes Acme::6502::Tube version 0.70
+This document describes Acme::6502::Tube version 0.71
 
 =head1 SYNOPSIS
 
