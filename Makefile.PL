@@ -12,7 +12,6 @@ WriteMakefile(
     PL_FILES      => {},
     PREREQ_PM     => {
         'Test::More'        => 0,
-        'version'           => 0,
         'Class::Std'        => 0,
         'Class::Std::Slots' => 0,
         'Term::ReadKey'     => 0,
