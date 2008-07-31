@@ -1,4 +1,6 @@
-clear
+# *** MODIFIED TEST FROM ORIGINAL MONKEYNES
+# *** Now properly checks $mem[$0002] and not $mem[$0102] as
+# *** zero page mode wraps
 power on
 regs
 
@@ -17,9 +19,9 @@ op a2 62
 op a0 0b
 op 96 f7
 
-# Should be: IY=0B, IX=62, mem[$0102]=62 
+# Should be: IY=0B, IX=62, mem[$0002]=62 
 test iy = 0b
 test ix = 62
-test m:0102 = 62
+test m:0002 = 62
 
 save verify_96.txt
