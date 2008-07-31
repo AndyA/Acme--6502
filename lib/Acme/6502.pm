@@ -522,7 +522,7 @@ sub _pop {
 }
 
 sub _pop_p {
-    return '$s = ($s + 1) & 0xFF; $p = $mem[STACK + $s] | R | B;' . "\n";
+    return '$s = ($s + 1) & 0xFF; $p = $mem[STACK + $s] | R; $p &= ~B;' . "\n";
 }
 
 # Addressing modes return a list containing setup code, lvalue
