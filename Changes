@@ -30,6 +30,7 @@ Revision history for Acme-6502
 0.XX    XXXX
         Added a test suite pulled from the monkeynes project
         - patched script_7C.txt to work properly
+        - patched script_95.txt to test proper mem location
         - patched script_96.txt to test proper mem location
         Fix PLP to clear B flag instead of setting it
         Fix TSX to set N and Z flag based on the value of X
