@@ -1,0 +1,11 @@
+clear
+power on
+regs
+
+op a2 0b
+op 7c efbe
+
+# Should be: PC=BEFA
+test pc = befa
+
+save verify_7C.txt
