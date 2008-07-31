@@ -136,6 +136,10 @@ sub run_script {
             $cpu->poke_code( 0, ( 0 ) x 65536 );
             diag( 'Mem cleared' );
         }
+        elsif( $_ eq 'step' ) {
+            diag "Running next instruction...";
+            $cpu->run( 1 );
+        }
         elsif( m{^regset (.+) (.+)} ) {
             $regset_lut{ lc $1 }->( $cpu, hex $2 );
             diag( "$1 set to $2" );
