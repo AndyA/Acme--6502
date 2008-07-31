@@ -24,5 +24,11 @@ Revision history for Acme-6502
         An end to version number madness. I hope.
     
 0.71    2007-11-08
-	A new dawn in the struggle to free ourselves from the
-	shackles of version number oppression.
+        A new dawn in the struggle to free ourselves from the
+        shackles of version number oppression.
+
+0.XX    XXXX
+        Added a test suite pulled from the monkeynes project
+        - patched script_7C.txt to work properly
+        Fix PLP to clear B flag instead of setting it
+        Fix TSX to set N and Z flag based on the value of X
