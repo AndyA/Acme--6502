@@ -254,7 +254,7 @@ sub BUILD {
         $bad_inst,                                   # B7
         $inst->( '$p &= ~V;' ),                      # B8 CLV
         $inst->( _lod( _absy(), '$a' ) ),            # B9 LDA abs, y
-        $inst->( '$x = $s;' ),                       # BA TSX
+        $inst->( '$x = $s;', _set_nz( '$x' ) ),      # BA TSX
         $bad_inst,                                   # BB
         $inst->( _lod( _absx(), '$y' ) ),            # BC LDY abs, x
         $inst->( _lod( _absx(), '$a' ) ),            # BD LDA abs, x
@@ -502,6 +502,12 @@ sub call_os {
 }
 
 # Functions that generate code fragments
+sub _set_nz {
+    return '$p &= ~(N|Z);'
+        . 'if( ' . $_[0] . ' & 0x80){ $p |= N }'
+        . 'elsif( ' . $_[ 0 ]. ' == 0 ){ $p |= Z }';
+}
+
 sub _push {
     my $r = '';
     for ( @_ ) {
