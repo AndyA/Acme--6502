@@ -52,6 +52,55 @@ my %test_lut = (
     },
 );
 
+my %regset_lut = (
+    ps => sub {
+        shift->set_p( shift );
+    },
+    pc => sub {
+        shift->set_pc( shift );
+    },
+    sp => sub {
+        shift->set_s( shift );
+    },
+    acc => sub {
+        shift->set_a( shift );
+    },
+    ix => sub {
+        shift->set_x( shift );
+    },
+    iy => sub {
+        shift->set_y( shift );
+    },
+    s => sub {
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p & ~$_[ 0 ]->N );
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p | $_[ 0 ]->N );
+    },
+    v => sub {
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p & ~$_[ 0 ]->V );
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p | $_[ 0 ]->V );
+    },
+    b => sub {
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p & ~$_[ 0 ]->B );
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p | $_[ 0 ]->B );
+    },
+    d => sub {
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p & ~$_[ 0 ]->D );
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p | $_[ 0 ]->D );
+    },
+    i => sub {
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p & ~$_[ 0 ]->I );
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p | $_[ 0 ]->I );
+    },
+    z => sub {
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p & ~$_[ 0 ]->Z );
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p | $_[ 0 ]->Z );
+    },
+    c => sub {
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p & ~$_[ 0 ]->C );
+        $_[ 0 ]->set_p( $_[ 0 ]->get_p | $_[ 0 ]->C );
+    },
+);
+
 my $glob = $ENV{TEST_OP} || '*';
 my @files = glob( "t/monkeynes/script_${glob}.txt" );
 
@@ -87,6 +136,10 @@ sub run_script {
             $cpu->poke_code( 0, ( 0 ) x 65536 );
             diag( 'Mem cleared' );
         }
+        elsif( m{^regset (.+) (.+)} ) {
+            $regset_lut{ lc $1 }->( $cpu, hex $2 );
+            diag( "$1 set to $2" );
+        }
         elsif( m{^regs(?: (.+))?} ) {
             diag_regs( $cpu, $1 );
         }
@@ -98,7 +151,7 @@ sub run_script {
             my( $op, @args ) = split( /:/, $1 );
             my $cmp = $2;
             $cmp = '==' if $cmp eq '=';
-            cmp_ok( $test_lut{ $op }->( $cpu, @args ), $cmp, hex $3, "$1 $2 $3" );
+            cmp_ok( $test_lut{ lc $op }->( $cpu, @args ), $cmp, hex $3, "$1 $2 $3" );
         }
         elsif( m{^op (.+)} ) {
             my( $op, $args_hex ) = split(' ', $1 );
