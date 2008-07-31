@@ -9,67 +9,46 @@ BEGIN {
 
 my %test_lut = (
     m => sub {
-        my $diag = "Mem[\$$_[1]]=$_[2]";
-        is shift->read_8( hex shift ), hex shift, $diag;
+        return shift->read_8( hex shift );
     },
     ps => sub {
-        my $diag = "PS=$_[1]";
-        is shift->get_p, hex shift, $diag;
+        return shift->get_p;
     },
     pc => sub {
-        my $diag = "PC=$_[1]";
-        is shift->get_pc, hex shift, $diag;
+        return shift->get_pc;
     },
     sp => sub {
-        my $diag = "SP=$_[1]";
-        is shift->get_s, hex shift, $diag;
+        return shift->get_s;
     },
     acc => sub {
-        my $diag = "ACC=$_[1]";
-        is shift->get_a, hex shift, $diag;
+        return shift->get_a;
     },
     ix => sub {
-        my $diag = "IX=$_[1]";
-        is shift->get_x, hex shift, $diag;
+        return shift->get_x;
     },
     iy => sub {
-        my $diag = "IY=$_[1]";
-        is shift->get_y, hex shift, $diag;
+        return shift->get_y;
     },
     s => sub {
-        my $cpu = shift;
-        my $diag = "N=$_[0]";
-        is( $cpu->get_p & $cpu->N ? 1 : 0, shift, $diag );
+        return $_[ 0 ]->get_p & $_[ 0 ]->N ? 1 : 0;
     },
     v => sub {
-        my $cpu = shift;
-        my $diag = "V=$_[0]";
-        is( $cpu->get_p & $cpu->V ? 1 : 0, shift, $diag );
+        return $_[ 0 ]->get_p & $_[ 0 ]->V ? 1 : 0;
     },
     b => sub {
-        my $cpu = shift;
-        my $diag = "B=$_[0]";
-        is( $cpu->get_p & $cpu->B ? 1 : 0, shift, $diag );
+        return $_[ 0 ]->get_p & $_[ 0 ]->B ? 1 : 0;
     },
     d => sub {
-        my $cpu = shift;
-        my $diag = "D=$_[0]";
-        is( $cpu->get_p & $cpu->D ? 1 : 0, shift, $diag );
+        return $_[ 0 ]->get_p & $_[ 0 ]->D ? 1 : 0;
     },
     i => sub {
-        my $cpu = shift;
-        my $diag = "I=$_[0]";
-        is( $cpu->get_p & $cpu->I ? 1 : 0, shift, $diag );
+        return $_[ 0 ]->get_p & $_[ 0 ]->I ? 1 : 0;
     },
     z => sub {
-        my $cpu = shift;
-        my $diag = "Z=$_[0]";
-        is( $cpu->get_p & $cpu->Z ? 1 : 0, shift, $diag );
+        return $_[ 0 ]->get_p & $_[ 0 ]->Z ? 1 : 0;
     },
     c => sub {
-        my $cpu = shift;
-        my $diag = "C=$_[0]";
-        is( $cpu->get_p & $cpu->C ? 1 : 0, shift, $diag );
+        return $_[ 0 ]->get_p & $_[ 0 ]->C ? 1 : 0;
     },
 );
 
@@ -115,9 +94,11 @@ sub run_script {
             $cpu->write_8( hex $1, hex $2 );
             is( $cpu->read_8( hex $1 ), hex $2, "Mem[$1] set to $2" );
         }
-        elsif( m{^test (.+) = (.+)} ) {
-            my( $op, @args ) = ( split( /:/, $1 ), $2 );
-            $test_lut{ $op }->( $cpu, @args );
+        elsif( m{^test (.+) (.+) (.+)} ) {
+            my( $op, @args ) = split( /:/, $1 );
+            my $cmp = $2;
+            $cmp = '==' if $cmp eq '=';
+            cmp_ok( $test_lut{ $op }->( $cpu, @args ), $cmp, hex $3, "$1 $2 $3" );
         }
         elsif( m{^op (.+)} ) {
             my( $op, $args_hex ) = split(' ', $1 );
