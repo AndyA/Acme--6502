@@ -1,11 +1,17 @@
+# *** MODIFIED TEST FROM ORIGINAL MONKEYNES
+# *** Now properly checks that it just to $mem[ $BEFA + $BEFB ]
 clear
 power on
 regs
 
+# Set jump location
+memset befa ad
+memset befb de
+
 op a2 0b
 op 7c efbe
 
-# Should be: PC=BEFA
-test pc = befa
+# Should be: PC=DEAD
+test pc = dead
 
 save verify_7C.txt
