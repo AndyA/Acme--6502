@@ -104,8 +104,12 @@ sub run_script {
             $cpu->set_p( $cpu->get_p | $cpu->R );
             isa_ok( $cpu, 'Acme::6502' );
         }
-        elsif( $_ eq 'regs' ) {
-            diag_regs( $cpu );
+        elsif( $_ eq 'memclear' ) {
+            $cpu->poke_code( 0, ( 0 ) x 65536 );
+            diag( 'Mem cleared' );
+        }
+        elsif( m{^regs(?: (.+))?} ) {
+            diag_regs( $cpu, $1 );
         }
         elsif( m{^memset (.+) (.+)} ) {
             $cpu->write_8( hex $1, hex $2 );
@@ -134,15 +138,17 @@ sub run_script {
 
 sub diag_regs {
     my $cpu = shift;
+    my $reg = uc shift;
 
-    diag( 'CPU Registers' );
-    diag( sprintf '  PC:    $%X', $cpu->get_pc );
-    diag( sprintf '  SP:    $%X', $cpu->get_s );
-    diag( sprintf '  ACC:   $%X', $cpu->get_a );
-    diag( sprintf '  IX:    $%X', $cpu->get_x );
-    diag( sprintf '  IY:    $%X', $cpu->get_y );
-    diag( '  Flags  S V - B D I Z C' );
+    diag( 'CPU Registers' ) if !$reg;
+    diag( sprintf '  PC:    $%X', $cpu->get_pc ) if !$reg || $reg eq 'PC';
+    diag( sprintf '  SP:    $%X', $cpu->get_s ) if !$reg || $reg eq 'SP';
+    diag( sprintf '  ACC:   $%X', $cpu->get_a ) if !$reg || $reg eq 'ACC';
+    diag( sprintf '  IX:    $%X', $cpu->get_x ) if !$reg || $reg eq 'IX';
+    diag( sprintf '  IY:    $%X', $cpu->get_y ) if !$reg || $reg eq 'IY';
+    # this should be fixed to handle just one flag at a time
+    diag( '  Flags  S V - B D I Z C' ) if !$reg || $reg =~ m{^(PS|[SVBDIZC])$};
     diag( sprintf '  PS:    %d %d %d %d %d %d %d %d',
         split( //, sprintf( '%08b', $cpu->get_p ) )
-    );
+    ) if !$reg || $reg =~ m{^(PS|[SVBDIZC])$};
 }
