@@ -32,3 +32,4 @@ Revision history for Acme-6502
         - patched script_7C.txt to work properly
         Fix PLP to clear B flag instead of setting it
         Fix TSX to set N and Z flag based on the value of X
+        Emulate a page boundary bug in JMP instructions
