@@ -63,7 +63,7 @@ sub BUILD {
         $inst->(    # 00 BRK
             _push( '($pc + 1) >> 8', '($pc + 1)' ),
             _push( '$p | B' ),
-            '$p = $p | I & ~D;',
+            '$p = $p | I | B & ~D;',
             _jmp_i( BREAK )
         ),
         $inst->( _ora( _zpix() ) ),      # 01 ORA (zp, x)

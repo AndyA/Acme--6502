@@ -38,3 +38,4 @@ Revision history for Acme-6502
         Fix PLP to clear B flag instead of setting it
         Fix TSX to set N and Z flag based on the value of X
         Emulate a page boundary bug in JMP instructions
+        Fix BRK to set B flag
