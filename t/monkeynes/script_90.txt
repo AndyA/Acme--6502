@@ -1,3 +1,5 @@
+# *** MODIFIED TEST FROM ORIGINAL MONKEYNES
+# *** Now properly checks negative branching
 clear
 power on
 regs
@@ -42,8 +44,8 @@ memset 9041 A0
 
 step
 
-# Should be: PC=9022, cycles=3
-test pc = 9022
+# Should be: PC=8FE2, cycles=3
+test pc = 8FE2
 
 # Positive Branch taken to different page ---------
 regset c 0
@@ -68,7 +70,7 @@ memset 9041 F7
 
 step
 
-# Should be: PC=8FCB, cycles=4
-test pc = 8FCB
+# Should be: PC=9039, cycles=4
+test pc = 9039
 
 save verify_90.txt

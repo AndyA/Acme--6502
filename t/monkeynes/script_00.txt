@@ -1,8 +1,10 @@
+# *** MODIFIED TEST FROM ORIGINAL MONKEYNES
+# *** Proper diag info, "IRQ" not "NMI"
 clear
 power on
 regs
 
-# Load the NMI Vector
+# Load the IRQ Vector
 memset fffe ef
 memset ffff be
 
