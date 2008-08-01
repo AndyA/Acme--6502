@@ -111,7 +111,6 @@ for my $file ( @files ) {
     chomp( @lines );
     run_script( @lines );
     close( $script );
-    exit;
 }
 
 sub run_script {
