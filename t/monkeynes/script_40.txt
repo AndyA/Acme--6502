@@ -1,5 +1,6 @@
 # *** MODIFIED TEST FROM ORIGINAL MONKEYNES
 # *** Proper diag info, "IRQ" not "NMI"
+# *** BRK stores PC + 2, RTI goes to PC + 3
 clear
 power on
 regs
@@ -25,8 +26,8 @@ test pc = beef
 test i = 1
 test b = 1
 test sp = fc
-test m:01ff = 0
-test m:01fe = 1
+test m:01ff = 80
+test m:01fe = 2
 test m:01fd = f2
 
 # Now for the RTI ----------------
@@ -34,7 +35,7 @@ op 40
 
 # Should be: PC=0001, I=0, B=1
 # SP=FF, PS=F2
-test pc = 1
+test pc = 8003
 test i = 0
 test b = 1
 test sp = ff

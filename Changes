@@ -34,7 +34,8 @@ Revision history for Acme-6502
         - patched script_95.txt to test proper mem location
         - patched script_96.txt to test proper mem location
         - patched all branching tests to do proper negative branches
-        - patched script_40.txt and script_00.txt with proper diag info
+        - patched script_40.txt and script_00.txt with proper diag info and
+          proper PC storage on BRK
         Fix PLP to clear B flag instead of setting it
         Fix TSX to set N and Z flag based on the value of X
         Emulate a page boundary bug in JMP instructions

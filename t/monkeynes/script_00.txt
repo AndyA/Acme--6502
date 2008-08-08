@@ -1,5 +1,6 @@
 # *** MODIFIED TEST FROM ORIGINAL MONKEYNES
 # *** Proper diag info, "IRQ" not "NMI"
+# *** BRK stores PC + 2
 clear
 power on
 regs
@@ -25,8 +26,8 @@ test pc = beef
 test i = 1
 test b = 1
 test sp = fc
-test m:01ff = 0
-test m:01fe = 1
+test m:01ff = 80
+test m:01fe = 2
 test m:01fd = f2
 
 save verify_00.txt
