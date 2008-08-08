@@ -106,7 +106,7 @@ my @files = glob( "t/monkeynes/script_${glob}.txt" );
 
 for my $file ( @files ) {
     open( my $script, $file ) || die qq(cannot load test script "$file");
-    diag( qq(Running script "$file") );
+    _diag( qq(Running script "$file") );
     my @lines = <$script>;
     chomp( @lines );
     run_script( @lines );
@@ -120,7 +120,7 @@ sub run_script {
         next if m{^\s*$};
         next if m{^save};
         if( m{^# (.+)} ) {
-            diag( $1 );
+            _diag( $1 );
         }
         elsif( $_ eq 'clear' ) {
             next;
@@ -133,15 +133,15 @@ sub run_script {
         }
         elsif( $_ eq 'memclear' ) {
             $cpu->poke_code( 0, ( 0 ) x 65536 );
-            diag( 'Mem cleared' );
+            _diag( 'Mem cleared' );
         }
         elsif( $_ eq 'step' ) {
-            diag "Running next instruction...";
+            _diag( 'Running next instruction...' );
             $cpu->run( 1 );
         }
         elsif( m{^regset (.+) (.+)} ) {
             $regset_lut{ lc $1 }->( $cpu, hex $2 );
-            diag( "$1 set to $2" );
+            _diag( "$1 set to $2" );
         }
         elsif( m{^regs(?: (.+))?} ) {
             diag_regs( $cpu, $1 );
@@ -158,7 +158,7 @@ sub run_script {
         }
         elsif( m{^op (.+)} ) {
             my( $op, $args_hex ) = split(' ', $1 );
-            diag( "OP: $1" );
+            _diag( "OP: $1" );
             $args_hex = '' unless defined $args_hex;
             my @args = ( $args_hex =~ m{(..)}g );
             my $pc = hex(8000);
@@ -177,15 +177,20 @@ sub diag_regs {
     my $cpu = shift;
     my $reg = uc shift;
 
-    diag( 'CPU Registers' ) if !$reg;
-    diag( sprintf '  PC:    $%X', $cpu->get_pc ) if !$reg || $reg eq 'PC';
-    diag( sprintf '  SP:    $%X', $cpu->get_s ) if !$reg || $reg eq 'SP';
-    diag( sprintf '  ACC:   $%X', $cpu->get_a ) if !$reg || $reg eq 'ACC';
-    diag( sprintf '  IX:    $%X', $cpu->get_x ) if !$reg || $reg eq 'IX';
-    diag( sprintf '  IY:    $%X', $cpu->get_y ) if !$reg || $reg eq 'IY';
+    _diag( 'CPU Registers' ) if !$reg;
+    _diag( sprintf '  PC:    $%X', $cpu->get_pc ) if !$reg || $reg eq 'PC';
+    _diag( sprintf '  SP:    $%X', $cpu->get_s ) if !$reg || $reg eq 'SP';
+    _diag( sprintf '  ACC:   $%X', $cpu->get_a ) if !$reg || $reg eq 'ACC';
+    _diag( sprintf '  IX:    $%X', $cpu->get_x ) if !$reg || $reg eq 'IX';
+    _diag( sprintf '  IY:    $%X', $cpu->get_y ) if !$reg || $reg eq 'IY';
     # this should be fixed to handle just one flag at a time
-    diag( '  Flags  S V - B D I Z C' ) if !$reg || $reg =~ m{^(PS|[SVBDIZC])$};
-    diag( sprintf '  PS:    %d %d %d %d %d %d %d %d',
+    _diag( '  Flags  S V - B D I Z C' ) if !$reg || $reg =~ m{^(PS|[SVBDIZC])$};
+    _diag( sprintf '  PS:    %d %d %d %d %d %d %d %d',
         split( //, sprintf( '%08b', $cpu->get_p ) )
     ) if !$reg || $reg =~ m{^(PS|[SVBDIZC])$};
+}
+
+sub _diag {
+    return unless $ENV{DIAG_6502};
+    diag( @_ );
 }
