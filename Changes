@@ -40,3 +40,6 @@ Revision history for Acme-6502
         Fix TSX to set N and Z flag based on the value of X
         Emulate a page boundary bug in JMP instructions
         Fix BRK to set B flag
+
+0.73    2008-09-24
+        Oops. Added NES tests to MANIFEST
