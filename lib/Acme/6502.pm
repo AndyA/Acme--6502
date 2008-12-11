@@ -795,10 +795,17 @@ sub _bfnz {
 
 sub _jmp_i {
   my $a = shift;
-# this should emulate a page boundary bug:
-# JMP 0x80FF fetches from 0x80FF and 0x8000 instead of 0x80FF and 0x8100
-  my $b = "($a & 0xff) == 0xff ? ($a & 0xff00) : $a + 1";
-  return '$pc = $mem[' . $a . '] | ($mem[' . $b . ' ] << 8);' . "\n";
+  return '$pc = $mem[' . $a . '] | ($mem[' . $a . ' + 1] << 8);' . "\n";
+}
+
+sub _jmp_i_bug {
+  my $a = shift;
+
+  # this should emulate a page boundary bug:
+  # JMP 0x80FF fetches from 0x80FF and 0x8000
+  # instead of 0x80FF and 0x8100
+  my $b = "($a & 0xFF00) | (($a + 1) & 0xFF)";
+  return '$pc = $mem[' . $a . '] | ($mem[' . $b . '] << 8);' . "\n";
 }
 
 sub _jmp {
@@ -806,7 +813,8 @@ sub _jmp {
 }
 
 sub _jmpi {
-  return 'my $w = $mem[$pc] | ($mem[$pc + 1] << 8); ' . _jmp_i( '$w' );
+  return 'my $w = $mem[$pc] | ($mem[$pc + 1] << 8); '
+   . _jmp_i_bug( '$w' );
 }
 
 sub _jmpix {
