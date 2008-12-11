@@ -43,3 +43,8 @@ Revision history for Acme-6502
 
 0.73    2008-09-24
         Oops. Added NES tests to MANIFEST
+
+0.74    2008-12-10
+        Fix indirect JMP bug emulation so it only applies to
+        indirect JMPs.
+
