@@ -8,9 +8,9 @@ WriteMakefile(
   AUTHOR        => 'Andy Armstrong <andy@hexten.net>',
   VERSION_FROM  => 'lib/Acme/6502.pm',
   ABSTRACT_FROM => 'lib/Acme/6502.pm',
-  LICENSE       => 'perl',
-  PL_FILES      => {},
-  PREREQ_PM     => {
+  license( 'perl' ),
+  PL_FILES  => {},
+  PREREQ_PM => {
     'Test::More'        => 0,
     'Class::Std'        => 0,
     'Class::Std::Slots' => 0,
@@ -19,3 +19,11 @@ WriteMakefile(
   dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
   clean => { FILES    => 'Acme-6502-*' },
 );
+
+sub license {
+  my $lic = shift;
+  local $^W = 0;    # Silence warning about non-numeric version
+  return
+   unless $ExtUtils::MakeMaker::VERSION >= '6.31';
+  return ( LICENSE => $lic );
+}
