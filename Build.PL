@@ -1,8 +1,12 @@
 use strict;
 use warnings;
-use Module::Build;
 
-my $builder = Module::Build->new(
+use lib 'inc';
+
+use Module::Build;
+use MyBuilder;
+
+my $builder = MyBuilder->new(
   module_name       => 'Acme::6502',
   sign              => 1,
   license           => 'perl',
