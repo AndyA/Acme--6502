@@ -3,8 +3,8 @@ Changes
 inc/MyBuilder.pm
 lib/Acme/6502.pm
 lib/Acme/6502/Tube.pm
-Makefile.PL
 MANIFEST
+META.yml
 README
 Roms/Forth-2.5.rom
 t/00.load.t
