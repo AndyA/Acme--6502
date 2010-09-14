@@ -3,7 +3,6 @@ package Acme::6502;
 use warnings FATAL => 'all';
 use strict;
 use Carp;
-use Class::Std;
 
 our $VERSION = '0.76';
 
@@ -32,6 +31,55 @@ use constant {
   ESCAPE_OP  => 0x0B,
   ESCAPE_SIG => 0xAD
 };
+
+BEGIN {
+    for my $reg ( qw(a x y s p pc) ) {
+        no strict 'refs';
+        *{ __PACKAGE__ . "\::get_${reg}" } = sub {
+            return shift->{ reg }->{ $_ };
+        };
+        *{ __PACKAGE__ . "\::set_${reg}" } = sub {
+            shift->{ reg }->{ $_ } = shift;
+        };
+    }
+}
+
+sub new {
+    my $class = shift;
+    my $self  = bless { }, $class;
+
+    $self->_BUILD( @_ );
+
+    return $self;
+}
+
+sub _BUILD {
+    my( $self, $args ) = @_;
+
+    $args ||= {};
+
+    $self->{ mem } = [ ( 0 ) x 65536 ];
+    $self->{ reg } = {
+        map { $_ => 0 } qw( a x y s p pc )
+    };
+    $self->{ os } = [ ];
+    $self->{ jumptab } = $args->{ jumptab } || 0xFA00;
+    $self->{ zn } = [ $self->Z, ( 0 ) x 127, ( $self->N ) x 128 ) ];
+}
+
+sub _bad_inst {
+    my $self = shift;
+    my $pc   = $self->get_pc;
+
+    croak sprintf( "Bad instruction at &%04x (&%02x)\n",
+      $pc - 1, $self->{ mem }->[ $pc - 1 ] );
+}
+
+1;
+
+__END__
+
+
 
 my %cpu : ATTR;
 
