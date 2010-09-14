@@ -64,7 +64,29 @@ sub _BUILD {
     };
     $self->{ os } = [ ];
     $self->{ jumptab } = $args->{ jumptab } || 0xFA00;
-    $self->{ zn } = [ $self->Z, ( 0 ) x 127, ( $self->N ) x 128 ) ];
+    $self->{ zn } = [ $self->Z, ( 0 ) x 127, ( $self->N ) x 128 ];
+}
+
+sub set_jumptab {
+    my $self = shift;
+    $self->{ jumptab } = shift;
+}
+
+sub get_state {
+    my $self = shift;
+    return @{ $self->{ reg } }{ qw( a x y s p pc ) };
+}
+
+sub get_xy {
+    my $self = shift;
+    return $self->get_x || ( $self->get_y << 8 );
+}
+
+sub set_xy {
+    my $self = shift;
+    my $v = shift;
+    $self->set_x( $v & 0xFF );
+    $self->set_y( ( $v >> 8 ) & 0xFF );
 }
 
 sub _bad_inst {
