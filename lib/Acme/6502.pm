@@ -105,6 +105,33 @@ sub decode_flags {
     return $desc;
 }
 
+sub read_str {
+    my $self = shift;
+    my $addr = shift;
+    my $str  = '';
+
+    while ( $self->{ mem }->[ $addr ] != 0x0D ) {
+        $str .= chr( $self->{ mem }->[ $addr++ ] );
+    }
+
+    return $str;
+}
+
+sub read_chunk {
+    my $self = shift;
+    my ( $from, $to ) = @_;
+
+    return pack( 'C*', @{ $self->{ mem } }[ $from .. $to - 1 ] );
+}
+
+sub write_chunk {
+    my $self = shift;
+    my ( $addr, $chunk ) = @_;
+
+    my $len = length( $chunk );
+    splice @{ $self->{ mem } }, $addr, $len, unpack( 'C*', $chunk );
+}
+
 sub read_8 {
     my $self = shift;
     my $addr = shift;
@@ -152,6 +179,13 @@ sub write_32 {
     $self->{ mem }->[ $addr + 1 ] = ( $val >> 8 ) & 0xFF;
     $self->{ mem }->[ $addr + 2 ] = ( $val >> 16 ) & 0xFF;
     $self->{ mem }->[ $addr + 3 ] = ( $val >> 24 ) & 0xFF;
+}
+
+sub poke_code {
+    my $self = shift;
+    my $addr = shift;
+
+    $self->{ mem }->[ $addr++ ] = $_ for @_;
 }
 
 sub _bad_inst {
