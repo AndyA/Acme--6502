@@ -89,6 +89,71 @@ sub set_xy {
     $self->set_y( ( $v >> 8 ) & 0xFF );
 }
 
+sub decode_flags {
+    my $self = shift;
+    my $f    = shift;
+    my $b    = 0x80;
+    my $n    = FLAGS;
+    my $desc = '';
+
+    while ( $n ) {
+        $desc .= ( $f & $b ) ? substr( $n, 0, 1 ) : '-';
+        $n = substr( $n, 1 );
+        $b >>= 1;
+    }
+
+    return $desc;
+}
+
+sub read_8 {
+    my $self = shift;
+    my $addr = shift;
+
+    return $self->{ mem }->[ $addr ];
+}
+
+sub write_8 {
+    my $self = shift;
+    my( $addr, $val ) = @_;
+
+    $self->{ mem }->[ $addr ] = $val;
+}
+
+sub read_16 {
+    my $self = shift;
+    my $addr = shift;
+
+    return $self->{ mem }->[ $addr ] | ( $self->{ mem }->[ $addr + 1 ] << 8 );
+}
+
+sub write_16 {
+    my $self = shift;
+    my( $addr, $val ) = @_;
+
+    $self->{ mem }->[ $addr ] = $val & 0xFF;
+    $self->{ mem }->[ $addr + 1 ] = ( $val >> 8 ) & 0xFF;
+}
+
+sub read_32 {
+    my $self = shift;
+    my $addr = shift;
+
+    return $self->{ mem }->[ $addr ]
+        | ( $self->{ mem }->[ $addr + 1 ] << 8 )
+        | ( $self->{ mem }->[ $addr + 2 ] << 16 )
+        | ( $self->{ mem }->[ $addr + 3 ] << 32 );
+}
+
+sub write_32 {
+    my $self = shift;
+    my( $addr, $val ) = @_;
+
+    $self->{ mem }->[ $addr ] = $val & 0xFF;
+    $self->{ mem }->[ $addr + 1 ] = ( $val >> 8 ) & 0xFF;
+    $self->{ mem }->[ $addr + 2 ] = ( $val >> 16 ) & 0xFF;
+    $self->{ mem }->[ $addr + 3 ] = ( $val >> 24 ) & 0xFF;
+}
+
 sub _bad_inst {
     my $self = shift;
     my $pc   = $self->get_pc;
