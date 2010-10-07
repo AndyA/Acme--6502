@@ -188,6 +188,23 @@ sub poke_code {
     $self->{ mem }->[ $addr++ ] = $_ for @_;
 }
 
+sub load_rom {
+    my $self = shift;
+    my ( $f, $a ) = @_;
+
+    open my $fh, '<', $f or croak "Can't read $f ($!)\n";
+    binmode $fh;
+    my $sz = -s $fh;
+    sysread $fh, my $buf, $sz or croak "Error reading $f ($!)\n";
+    close $fh;
+
+    $self->write_chunk( $a, $buf );
+}
+
+sub call_os {
+  croak "call_os() not supported";
+}
+
 sub _bad_inst {
     my $self = shift;
     my $pc   = $self->get_pc;
