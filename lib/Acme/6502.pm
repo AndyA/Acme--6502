@@ -205,6 +205,41 @@ sub call_os {
   croak "call_os() not supported";
 }
 
+sub run {
+    my $self = shift;
+    my $ic = shift;
+    my $cb = shift;
+
+    while ( $ic-- > 0 ) {
+        my( $a, $x, $y, $s, $p, $pc ) = $self->get_state;
+        $cb->( $pc, $self->{ mem }->[ $pc ], $a, $x, $y, $s, $p ) if defined $cb;
+        $self->set_pc( $pc + 1 );
+# TODO
+#        $decode[ $self->{ mem }->[ $pc ] ]->();
+    }
+}
+
+sub make_vector {
+    my $self = shift;
+    my ( $call, $vec, $func ) = @_;
+
+    $self->{ mem }->[ $call ] = 0x6C;                   # JMP (indirect)
+    $self->{ mem }->[ $call + 1 ] = $vec & 0xFF;
+    $self->{ mem }->[ $call + 2 ] = ( $vec >> 8 ) & 0xFF;
+
+    my $jumptab = $self->{ jumptab };
+    my $addr    = $jumptab;
+    $self->{ mem }->[ $jumptab++ ] = ESCAPE_OP;
+    $self->{ mem }->[ $jumptab++ ] = ESCAPE_SIG;
+    $self->{ mem }->[ $jumptab++ ] = $func;
+    $self->{ mem }->[ $jumptab++ ] = 0x60;
+
+    $self->set_jumptab( $jumptab );
+
+    $self->{ mem }->[ $vec ] = $addr & 0xFF;
+    $self->{ mem }->[ $vec + 1 ] = ( $addr >> 8 ) & 0xFF;
+}
+
 sub _bad_inst {
     my $self = shift;
     my $pc   = $self->get_pc;
