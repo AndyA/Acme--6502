@@ -36,10 +36,12 @@ BEGIN {
     for my $reg ( qw(a x y s p pc) ) {
         no strict 'refs';
         *{ __PACKAGE__ . "\::get_${reg}" } = sub {
-            return shift->{ reg }->{ $_ };
+            my $self = shift;
+            return $self->{ reg }->{ $reg };
         };
         *{ __PACKAGE__ . "\::set_${reg}" } = sub {
-            shift->{ reg }->{ $_ } = shift;
+            my ( $self, $v ) = @_;
+            $self->{ reg }->{ $reg } = $v;
         };
     }
 }
@@ -65,6 +67,13 @@ sub _BUILD {
     $self->{ os } = [ ];
     $self->{ jumptab } = $args->{ jumptab } || 0xFA00;
     $self->{ zn } = [ $self->Z, ( 0 ) x 127, ( $self->N ) x 128 ];
+
+    $self->{ ops } = [
+        ( undef ) x 24,
+        sub { my $self = shift; return $self->set_p( $self->get_p & ~$self->C ); },
+        ( undef ) x 31,
+        sub { my $self = shift; return $self->set_p( $self->get_p | $self->C ); },
+    ];
 }
 
 sub set_jumptab {
@@ -214,8 +223,7 @@ sub run {
         my( $a, $x, $y, $s, $p, $pc ) = $self->get_state;
         $cb->( $pc, $self->{ mem }->[ $pc ], $a, $x, $y, $s, $p ) if defined $cb;
         $self->set_pc( $pc + 1 );
-# TODO
-#        $decode[ $self->{ mem }->[ $pc ] ]->();
+        $self->{ ops }->[ $self->{ mem }->[ $pc ] ]->( $self );
     }
 }
 
