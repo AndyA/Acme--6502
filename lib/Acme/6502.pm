@@ -96,8 +96,237 @@ sub _BUILD {
         undef,     # 16 ASL zp, x
         $bad_inst, # 17
         sub { $_[ 0 ]->set_p( $_[ 0 ]->get_p & ~$_[ 0 ]->C ); }, # 18 CLC
-        ( undef ) x 31,
-        sub { $_[ 0 ]->set_p( $_[ 0 ]->get_p |  $_[ 0 ]->C ); },
+        undef,     # 19 ORA abs, y
+        undef,     # 1A INC A
+        $bad_inst, # 1B
+        undef,     # 1C TRB abs
+        undef,     # 1D ORA abs, x
+        undef,     # 1E ASL abs, x
+        $bad_inst, # 1F BBR1 rel
+        undef,     # 20 JSR
+        undef,     # 21 AND (zp, x)
+        $bad_inst, # 22
+        $bad_inst, # 23
+        undef,     # 24 BIT zp
+        undef,     # 25 AND zp
+        undef,     # 26 ROL zp
+        $bad_inst, # 27
+        undef,     # 28 PLP
+        undef,     # 29 AND  #imm
+        undef,     # 2A ROL A
+        $bad_inst, # 2B
+        undef,     # 2C BIT abs
+        undef,     # 2D AND abs
+        undef,     # 2E ROL abs
+        $bad_inst, # 2F BBR2 rel
+        undef,     # 30 BPL rel
+        undef,     # 31 AND (zp), y
+        undef,     # 32 AND (zp)
+        $bad_inst, # 33
+        undef,     # 34 BIT zp, x
+        undef,     # 35 AND zp, x
+        undef,     # 36 ROL zp, x
+        $bad_inst, # 37
+        sub { $_[ 0 ]->set_p( $_[ 0 ]->get_p | $_[ 0 ]->C ); }, # 38 SEC
+        undef,     # 39 AND abs, y
+        undef,     # 3A DEC A
+        $bad_inst, # 3B
+        undef,     # 3C BIT abs, x
+        undef,     # 3D AND abs, x
+        undef,     # 3E ROL abs, x
+        $bad_inst, # 3F BBR3 rel
+        undef,     # 40 RTI
+        undef,     # 41 EOR (zp, x)
+        $bad_inst, # 42
+        $bad_inst, # 43
+        $bad_inst, # 44
+        undef,     # 45 EOR zp
+        undef,     # 46 LSR zp
+        $bad_inst, # 47
+        undef,     # 48 PHA
+        undef,     # 49 EOR imm
+        undef,     # 4A LSR A
+        $bad_inst, # 4B
+        undef,     # 4C JMP abs
+        undef,     # 4D EOR abs
+        undef,     # 4E LSR abs
+        $bad_inst, # 4F BBR4 rel
+        undef,     # 50 BVC rel
+        undef,     # 51 EOR (zp), y
+        undef,     # 52 EOR (zp)
+        $bad_inst, # 53
+        $bad_inst, # 54
+        undef,     # 55 EOR zp, x
+        undef,     # 56 LSR zp, x
+        $bad_inst, # 57
+        sub { $_[ 0 ]->set_p( $_[ 0 ]->get_p & ~$_[ 0 ]->I ); }, # 58 CLI
+        undef,      # 59 EOR abs, y
+        undef,      # 5A PHY
+        $bad_inst,  # 5B
+        $bad_inst,  # 5C
+        undef,      # 5D EOR abs, x
+        undef,      # 5E LSR abs, x
+        $bad_inst,  # 5F BBR5 rel
+        undef,      # 60 RTS
+        undef,      # 61 ADC zp, x
+        $bad_inst,  # 62
+        $bad_inst,  # 63
+        undef,      # 64 STZ zp
+        undef,      # 65 ADC zp
+        undef,      # 66 ROR zp
+        $bad_inst,  # 67
+        undef,      # 68 PLA
+        undef,      # 69 ADC  #imm
+        undef,      # 6A ROR A
+        $bad_inst,  # 6B
+        undef,      # 6C JMP (abs)
+        undef,      # 6D ADC abs
+        undef,      # 6E ROR abs
+        $bad_inst,  # 6F BBR6 rel
+        undef,      # 70 BVS rel
+        undef,      # 71 ADC (zp), y
+        undef,      # 72 ADC (zp)
+        $bad_inst,  # 73
+        undef,      # 74 STZ zp, x
+        undef,      # 75 ADC zp, x
+        undef,      # 76 ROR zp, x
+        $bad_inst,  # 77
+        sub { $_[ 0 ]->set_p( $_[ 0 ]->get_p |  $_[ 0 ]->I ); }, # 78 STI
+        undef,      # 79 ADC abs, y
+        undef,      # 7A PLY
+        $bad_inst,  # 7B
+        undef,      # 7C JMP (abs, x)
+        undef,      # 7D ADC abs, x
+        undef,      # 7E ROR abs, x
+        $bad_inst,  # 7F BBR7 rel
+        undef,      # 80 BRA rel
+        undef,      # 81 STA (zp, x)
+        $bad_inst,  # 82
+        $bad_inst,  # 83
+        undef,      # 84 STY zp
+        undef,      # 85 STA zp
+        undef,      # 86 STX zp
+        $bad_inst,  # 87
+        undef,      # 88 DEY
+        undef,      # 89 BIT  #imm
+        undef,      # 8A TXA
+        $bad_inst,  # 8B
+        undef,      # 8C STY abs
+        undef,      # 8D STA abs
+        undef,      # 8E STX abs
+        $bad_inst,  # 8F BBS0 rel
+        undef,      # 90 BCC rel
+        undef,      # 91 STA (zp), y
+        undef,      # 92 STA (zp)
+        $bad_inst,  # 93
+        undef,      # 94 STY zp, x
+        undef,      # 95 STA zp, x
+        undef,      # 96 STX zp, y
+        $bad_inst,  # 97
+        undef,      # 98 TYA
+        undef,      # 99 STA abs, y
+        sub { $_[ 0 ]->set_s( $_[ 0 ]->get_x ); }, # 9A TXS
+        $bad_inst,  # 9B
+        undef,      # 9C STZ abs
+        undef,      # 9D STA abs, x
+        undef,      # 9E STZ abs, x
+        $bad_inst,  # 9F BBS1 rel
+        undef,      # A0 LDY  #imm
+        undef,      # A1 LDA (zp, x)
+        undef,      # A2 LDX  #imm
+        $bad_inst,  # A3
+        undef,      # A4 LDY zp
+        undef,      # A5 LDA zp
+        undef,      # A6 LDX zp
+        $bad_inst,  # A7
+        undef,      # A8 TAY
+        undef,      # A9 LDA  #imm
+        undef,      # AA TAX
+        $bad_inst,  # AB
+        undef,      # AC LDY abs
+        undef,      # AD LDA abs
+        undef,      # AE LDX abs
+        $bad_inst,  # AF BBS2 rel
+        undef,      # B0 BCS rel
+        undef,      # B1 LDA (zp), y
+        undef,      # B2 LDA (zp)
+        $bad_inst,  # B3
+        undef,      # B4 LDY zp, x
+        undef,      # B5 LDA zp, x
+        undef,      # B6 LDX zp, y
+        $bad_inst,  # B7
+        sub { $_[ 0 ]->set_p( $_[ 0 ]->get_p & ~$_[ 0 ]->V ); }, # B8 CLV
+        undef,      # B9 LDA abs, y
+        undef,      # BA TSX
+        $bad_inst,  # BB
+        undef,      # BC LDY abs, x
+        undef,      # BD LDA abs, x
+        undef,      # BE LDX abs, y
+        $bad_inst,  # BF BBS3 rel
+        undef,      # C0 CPY  #imm
+        undef,      # C1 CMP (zp, x)
+        $bad_inst,  # C2
+        $bad_inst,  # C3
+        undef,      # C4 CPY zp
+        undef,      # C5 CMP zp
+        undef,      # C6 DEC zp
+        $bad_inst,  # C7
+        undef,      # C8 INY
+        undef,      # C9 CMP  #imm
+        undef,      # CA DEX
+        $bad_inst,  # CB
+        undef,      # CC CPY abs
+        undef,      # CD CMP abs
+        undef,      # CE DEC abs
+        $bad_inst,  # CF BBS4 rel
+        undef,      # D0 BNE rel
+        undef,      # D1 CMP (zp), y
+        undef,      # D2 CMP (zp)
+        $bad_inst,  # D3
+        $bad_inst,  # D4
+        undef,      # D5 CMP zp, x
+        undef,      # D6 DEC zp, x
+        $bad_inst,  # D7
+        sub { $_[ 0 ]->set_p( $_[ 0 ]->get_p & ~$_[ 0 ]->D ); }, # D8 CLD
+        undef,      # D9 CMP abs, y
+        undef,      # DA PHX
+        $bad_inst,  # DB
+        $bad_inst,  # DC
+        undef,      # DD CMP abs, x
+        undef,      # DE DEC abs, x
+        $bad_inst,  # DF BBS5 rel
+        undef,      # E0 CPX  #imm
+        undef,      # E1 SBC (zp, x)
+        $bad_inst,  # E2
+        $bad_inst,  # E3
+        undef,      # E4 CPX zp
+        undef,      # E5 SBC zp
+        undef,      # E6 INC zp
+        $bad_inst,  # E7
+        undef,      # E8 INX
+        undef,      # E9 SBC  #imm
+        sub { },    # EA NOP
+        $bad_inst,  # EB
+        undef,      # EC CPX abs
+        undef,      # ED SBC abs
+        undef,      # EE INC abs
+        $bad_inst,  # EF BBS6 rel
+        undef,      # F0 BEQ rel
+        undef,      # F1 SBC (zp), y
+        undef,      # F2 SBC (zp)
+        $bad_inst,  # F3
+        $bad_inst,  # F4
+        undef,      # F5 SBC zp, x
+        undef,      # F6 INC zp, x
+        $bad_inst,  # F7
+        sub { $_[ 0 ]->set_p( $_[ 0 ]->get_p | $_[ 0 ]->D ); }, # F8 SED
+        undef,      # F9 SBC abs, y
+        undef,      # FA PLX
+        $bad_inst,  # FB
+        $bad_inst,  # FC
+        undef,      # FD SBC abs, x
+        undef,      # FE INC abs, x
+        $bad_inst   # FF BBS7 rel
     ];
 }
 
