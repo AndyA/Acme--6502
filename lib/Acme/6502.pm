@@ -68,11 +68,36 @@ sub _BUILD {
     $self->{ jumptab } = $args->{ jumptab } || 0xFA00;
     $self->{ zn } = [ $self->Z, ( 0 ) x 127, ( $self->N ) x 128 ];
 
+    my $bad_inst = $self->can( '_bad_instr' );
+
     $self->{ ops } = [
-        ( undef ) x 24,
-        sub { my $self = shift; return $self->set_p( $self->get_p & ~$self->C ); },
+        undef,     # 00 BRK
+        undef,     # 01 ORA (zp, x)
+        $bad_inst, # 02
+        $bad_inst, # 03
+        undef,     # 04 TSB zp
+        undef,     # 05 ORA zp
+        undef,     # 06 ASL zp
+        $bad_inst, # 07
+        undef,     # 08 PHP
+        undef,     # 09 ORA #imm
+        undef,     # 0A ASL A
+        $bad_inst, # 0B
+        undef,     # 0C TSB zp
+        undef,     # 0D ORA abs
+        undef,     # 0E ASL abs
+        $bad_inst, # 0F BBR0 rel
+        undef,     # 10 BPL rel
+        undef,     # 11 ORA (zp), y
+        undef,     # 12 ORA (zp)
+        $bad_inst, # 13
+        undef,     # 14 TRB (zp)
+        undef,     # 15 ORA zp, x
+        undef,     # 16 ASL zp, x
+        $bad_inst, # 17
+        sub { $_[ 0 ]->set_p( $_[ 0 ]->get_p & ~$_[ 0 ]->C ); }, # 18 CLC
         ( undef ) x 31,
-        sub { my $self = shift; return $self->set_p( $self->get_p | $self->C ); },
+        sub { $_[ 0 ]->set_p( $_[ 0 ]->get_p |  $_[ 0 ]->C ); },
     ];
 }
 
