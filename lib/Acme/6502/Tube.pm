@@ -114,7 +114,7 @@ sub BUILD {
       $self->set_xy( 0x0900 );
     }
     else {
-      die sprintf( "OSBYTE %02x handled\n", $a );
+      die sprintf( "OSBYTE %02x not handled\n", $a );
     }
   };
 
