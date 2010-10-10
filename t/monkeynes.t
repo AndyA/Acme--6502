@@ -180,7 +180,7 @@ sub run_script {
 
 sub diag_regs {
   my $cpu = shift;
-  my $reg = uc shift;
+  my $reg = uc( defined $_[0] ? $_[0] : '' );
 
   _diag( 'CPU Registers' ) if !$reg;
   _diag( sprintf '  PC:    $%X', $cpu->get_pc )

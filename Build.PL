@@ -13,11 +13,10 @@ my $builder = MyBuilder->new(
   dist_author       => 'Andy Armstrong <andy@hexten.net>',
   dist_version_from => 'lib/Acme/6502.pm',
   requires          => {
-    'Test::More'        => 0,
-    'version'           => 0,
-    'Class::Std'        => 0,
-    'Class::Std::Slots' => 0,
-    'Term::ReadKey'     => 0,
+    'Test::More'      => 0,
+    'version'         => 0,
+    'Term::ReadKey'   => 0,
+    'Test::LeakTrace' => 0,
   },
   add_to_cleanup => ['Acme-6502-*'],
 );

@@ -375,22 +375,6 @@ sub set_xy {
     $self->set_y( ( $v >> 8 ) & 0xFF );
 }
 
-sub decode_flags {
-    my $self = shift;
-    my $f    = shift;
-    my $b    = 0x80;
-    my $n    = FLAGS;
-    my $desc = '';
-
-    while ( $n ) {
-        $desc .= ( $f & $b ) ? substr( $n, 0, 1 ) : '-';
-        $n = substr( $n, 1 );
-        $b >>= 1;
-    }
-
-    return $desc;
-}
-
 sub read_str {
     my $self = shift;
     my $addr = shift;
@@ -913,6 +897,10 @@ well the squirrels will never know the difference.
 =head1 INTERFACE 
 
 =over
+
+=item C<new>
+
+Create a new 6502 CPU.
 
 =item C<call_os( $vec_number )>
 
