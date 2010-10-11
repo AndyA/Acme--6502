@@ -16,7 +16,6 @@ my $builder = MyBuilder->new(
     'Test::More'      => 0,
     'version'         => 0,
     'Term::ReadKey'   => 0,
-    'Test::LeakTrace' => 0,
   },
   add_to_cleanup => ['Acme-6502-*'],
 );
