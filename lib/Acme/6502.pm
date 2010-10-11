@@ -1059,7 +1059,7 @@ Acme::6502 requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-C<Acme::6502> needs C<Class::Std>.
+None.
 
 =head1 INCOMPATIBILITIES
 
@@ -1082,7 +1082,7 @@ Brian Cassidy C<< <bricas@cpan.org> >>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2006-2008, Andy Armstrong C<< <andy@hexten.net> >>. All
+Copyright (c) 2006-2010, Andy Armstrong C<< <andy@hexten.net> >>. All
 rights reserved.
 
 This module is free software; you can redistribute it and/or

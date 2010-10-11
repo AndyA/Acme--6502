@@ -51,3 +51,6 @@ Revision history for Acme-6502
 0.75    2009-05-29
         Remove Makefile.PL
         Move to GitHub
+
+0.76    TO BE RELEASED
+        Remove Class::Std dependency

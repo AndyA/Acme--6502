@@ -1,4 +1,4 @@
-Acme-6502 version 0.0.1
+Acme-6502 version 0.76
 
 INSTALLATION
 
@@ -24,7 +24,7 @@ None.
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2006, Andy Armstrong
+Copyright (C) 2006-2010, Andy Armstrong
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
