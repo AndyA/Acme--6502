@@ -3,8 +3,6 @@ package Acme::6502::Tube;
 use warnings;
 use strict;
 use Carp;
-use Class::Std;
-use Class::Std::Slots;
 use Time::HiRes qw(time);
 use Term::ReadKey;
 use base qw(Acme::6502);
@@ -40,18 +38,10 @@ use constant {
   OSCLI  => 0xFFF7
 };
 
-signals qw(
- pre_os post_os
-);
+sub _BUILD {
+  my ( $self, $args ) = @_;
 
-my %os : ATTR;
-
-sub BUILD {
-  my ( $self, $id, $args ) = @_;
-
-  my $time_base = time();
-
-  $os{$id} = [];
+  $self->SUPER::_BUILD( $args );
 
   # Inline OSASCI code
   $self->poke_code( OSASCI,
@@ -73,6 +63,13 @@ sub BUILD {
   );
 
   $self->write_16( $self->BREAK, 0xFF00 );
+}
+
+1;
+__END__
+  my $time_base = time();
+
+###
 
   my $oscli = sub {
     my $blk = $self->get_xy();
@@ -380,7 +377,8 @@ Andy Armstrong  C<< <andy@hexten.net> >>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2006, Andy Armstrong C<< <andy@hexten.net> >>. All rights reserved.
+Copyright (c) 2006-2010, Andy Armstrong C<< <andy@hexten.net> >>. All 
+rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.
