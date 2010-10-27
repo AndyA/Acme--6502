@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use Carp;
 use Time::HiRes qw(time);
-use Term::ReadKey;
+use Term::ReadKey ();
 use base qw(Acme::6502);
 
 our $VERSION = '0.76';
@@ -43,6 +43,8 @@ sub _BUILD {
 
   $self->SUPER::_BUILD( $args );
 
+  $self->{ time_base } = time();
+
   # Inline OSASCI code
   $self->poke_code( OSASCI,
     0xC9, 0x0D,          # CMP #&0D
@@ -63,192 +65,199 @@ sub _BUILD {
   );
 
   $self->write_16( $self->BREAK, 0xFF00 );
+
+  $self->set_jumptab( 0xFA00 );
+}
+
+sub _oscli {
+  my $self = shift;
+  my $blk = $self->get_xy();
+  my $cmd = '';
+  CH: for ( ;; ) {
+    my $ch = $self->read_8( $blk++ );
+    last CH if $ch < 0x20;
+    $cmd .= chr( $ch );
+  }
+  $cmd =~ s/^[\s\*]+//g;
+  if ( lc( $cmd ) eq 'quit' ) {
+    exit;
+  }
+  else {
+    system( $cmd );
+  }
+}
+
+sub _osbyte {
+  my $self = shift;
+  my $a = $self->get_a();
+  if ( $a == 0x7E ) {
+    # Ack escape
+    $self->write_8( 0xFF, 0 );
+    $self->set_x( 0xFF );
+  }
+  elsif ( $a == 0x82 ) {
+    # Read m/c high order address
+    $self->set_xy( 0 );
+  }
+  elsif ( $a == 0x83 ) {
+    # Read OSHWM (PAGE)
+    $self->set_xy( PAGE );
+  }
+  elsif ( $a == 0x84 ) {
+    # Read HIMEM
+    $self->set_xy( HIMEM );
+  }
+  elsif ( $a == 0xDA ) {
+    $self->set_xy( 0x0900 );
+  }
+  else {
+    die sprintf( "OSBYTE %02x not handled\n", $a );
+  }
+}
+
+sub _set_escape {
+  my $self = shift;
+  $self->write_8( 0xFF, 0xFF );
+}
+
+sub _osword {
+  my $self = shift;
+  my $a   = $self->get_a();
+  my $blk = $self->get_xy();
+
+  if ( $a == 0x00 ) {
+    # Command line input
+    my $buf = $self->read_16( $blk );
+    my $len = $self->read_8( $blk + 2 );
+    my $min = $self->read_8( $blk + 3 );
+    my $max = $self->read_8( $blk + 4 );
+    my $y   = 0;
+    if ( defined( my $in = <> ) ) {
+      my @c = map ord, split //, $in;
+      while ( @c && $len-- > 1 ) {
+        my $c = shift @c;
+        if ( $c >= $min && $c <= $max ) {
+          $self->write_8( $buf + $y++, $c );
+        }
+      }
+      $self->write_8( $buf + $y++, 0x0D );
+      $self->set_y( $y );
+      $self->set_p( $self->get_p() & ~$self->C );
+    }
+    else {
+      # Escape I suppose...
+      $self->set_p( $self->get_p() | $self->C );
+    }
+  }
+  elsif ( $a == 0x01 ) {
+    # Read clock
+    my $now = int( ( time() - $self->{ time_base } ) * 100 );
+    $self->write_32( $blk, $now );
+    $self->write_8( $blk + 4, 0 );
+  }
+  elsif ( $a == 0x02 ) {
+    # Set clock
+    my $tm = $self->read_32( $blk );
+    $time_base = time() - ( $tm * 100 );
+  }
+  else {
+    die sprintf( "OSWORD %02x not handled\n", $a );
+  }
+}
+
+sub _oswrch {
+  my $self = shift;
+  printf( "%c", $self->get_a() );
+}
+
+sub osrdch {
+  my $self = shift;
+  Term::ReadKey::ReadMode( 4 );
+  eval {
+    my $k = ord( Term::ReadKey::ReadKey( 0 ) );
+    $k = 0x0D if $k == 0x0A;
+    $self->set_a( $k );
+    if ( $k == 27 ) {
+      $self->set_escape;
+      $self->set_p( $self->get_p() | $self->C );
+    }
+    else {
+      $self->set_p( $self->get_p() & ~$self->C );
+    }
+  };
+  Term::ReadKey::ReadMode( 0 );
+  die $@ if $@;
+}
+
+sub osfile {
+  my $self = shift;
+  my $a     = $self->get_a();
+  my $blk   = $self->get_xy();
+  my $name  = $self->read_str( $self->read_16( $blk ) );
+  my $load  = $self->read_32( $blk + 2 );
+  my $exec  = $self->read_32( $blk + 6 );
+  my $start = $self->read_32( $blk + 10 );
+  my $end   = $self->read_32( $blk + 14 );
+
+  # printf("%-20s %08x %08x %08x %08x\n", $name, $load, $exec, $start, $end);
+  if ( $a == 0x00 ) {
+    # Save
+    open my $fh, '>', $name or die "Can't write $name\n";
+    binmode $fh;
+    my $buf = $self->read_chunk( $start, $end );
+    syswrite $fh, $buf or die "Error writing $name\n";
+    $self->set_a( 1 );
+  }
+  elsif ( $a == 0xFF ) {
+    # Load
+    if ( -f $name ) {
+      open my $fh, '<', $name or die "Can't read $name\n";
+      binmode $fh;
+      my $len = -s $fh;
+      sysread $fh, my $buf, $len or die "Error reading $name\n";
+      $load = PAGE if $exec & 0xFF;
+      $self->write_chunk( $load, $buf );
+      $self->write_32( $blk + 2,  $load );
+      $self->write_32( $blk + 6,  0x00008023 );
+      $self->write_32( $blk + 10, $len );
+      $self->write_32( $blk + 14, 0x00000000 );
+      $self->set_a( 1 );
+    }
+    elsif ( -d $name ) {
+      $self->set_a( 2 );
+    }
+    else {
+      $self->set_a( 0 );
+    }
+  }
+  else {
+    die sprintf( "OSFILE %02x not handled\n", $a );
+  }
+}
+
+sub osargs {
+  die "OSARGS not handled\n";
+}
+
+sub osbget {
+  die "OSBGET not handled\n";
+}
+
+sub osbput {
+  die "OSBPUT not handled\n";
+}
+
+sub osgbpb {
+  die "OSGBPB not handled\n";
+}
+
+sub osfind {
+  die "OSFIND not handled\n";
 }
 
 1;
 __END__
-  my $time_base = time();
 
-###
-
-  my $oscli = sub {
-    my $blk = $self->get_xy();
-    my $cmd = '';
-    CH: for ( ;; ) {
-      my $ch = $self->read_8( $blk++ );
-      last CH if $ch < 0x20;
-      $cmd .= chr( $ch );
-    }
-    $cmd =~ s/^[\s\*]+//g;
-    if ( lc( $cmd ) eq 'quit' ) {
-      exit;
-    }
-    else {
-      system( $cmd);
-    }
-  };
-
-  my $osbyte = sub {
-    my $a = $self->get_a();
-    if ( $a == 0x7E ) {
-      # Ack escape
-      $self->write_8( 0xFF, 0 );
-      $self->set_x( 0xFF );
-    }
-    elsif ( $a == 0x82 ) {
-      # Read m/c high order address
-      $self->set_xy( 0 );
-    }
-    elsif ( $a == 0x83 ) {
-      # Read OSHWM (PAGE)
-      $self->set_xy( PAGE );
-    }
-    elsif ( $a == 0x84 ) {
-      # Read HIMEM
-      $self->set_xy( HIMEM );
-    }
-    elsif ( $a == 0xDA ) {
-      $self->set_xy( 0x0900 );
-    }
-    else {
-      die sprintf( "OSBYTE %02x not handled\n", $a );
-    }
-  };
-
-  my $set_escape = sub {
-    $self->write_8( 0xFF, 0xFF );
-  };
-
-  my $osword = sub {
-    my $a   = $self->get_a();
-    my $blk = $self->get_xy();
-
-    if ( $a == 0x00 ) {
-      # Command line input
-      my $buf = $self->read_16( $blk );
-      my $len = $self->read_8( $blk + 2 );
-      my $min = $self->read_8( $blk + 3 );
-      my $max = $self->read_8( $blk + 4 );
-      my $y   = 0;
-      if ( defined( my $in = <> ) ) {
-        my @c = map ord, split //, $in;
-        while ( @c && $len-- > 1 ) {
-          my $c = shift @c;
-          if ( $c >= $min && $c <= $max ) {
-            $self->write_8( $buf + $y++, $c );
-          }
-        }
-        $self->write_8( $buf + $y++, 0x0D );
-        $self->set_y( $y );
-        $self->set_p( $self->get_p() & ~$self->C );
-      }
-      else {
-        # Escape I suppose...
-        $self->set_p( $self->get_p() | $self->C );
-      }
-    }
-    elsif ( $a == 0x01 ) {
-      # Read clock
-      my $now = int( ( time() - $time_base ) * 100 );
-      $self->write_32( $blk, $now );
-      $self->write_8( $blk + 4, 0 );
-    }
-    elsif ( $a == 0x02 ) {
-      # Set clock
-      my $tm = $self->read_32( $blk );
-      $time_base = time() - ( $tm * 100 );
-    }
-    else {
-      die sprintf( "OSWORD %02x not handled\n", $a );
-    }
-  };
-
-  my $oswrch = sub {
-    printf( "%c", $self->get_a() );
-  };
-
-  my $osrdch = sub {
-    ReadMode( 4 );
-    eval {
-      my $k = ord( ReadKey( 0 ) );
-      $k = 0x0D if $k == 0x0A;
-      $self->set_a( $k );
-      if ( $k == 27 ) {
-        $set_escape->();
-        $self->set_p( $self->get_p() | $self->C );
-      }
-      else {
-        $self->set_p( $self->get_p() & ~$self->C );
-      }
-    };
-    ReadMode( 0 );
-    die $@ if $@;
-  };
-
-  my $osfile = sub {
-    my $a     = $self->get_a();
-    my $blk   = $self->get_xy();
-    my $name  = $self->read_str( $self->read_16( $blk ) );
-    my $load  = $self->read_32( $blk + 2 );
-    my $exec  = $self->read_32( $blk + 6 );
-    my $start = $self->read_32( $blk + 10 );
-    my $end   = $self->read_32( $blk + 14 );
-
-#printf("%-20s %08x %08x %08x %08x\n", $name, $load, $exec, $start, $end);
-    if ( $a == 0x00 ) {
-      # Save
-      open my $fh, '>', $name or die "Can't write $name\n";
-      binmode $fh;
-      my $buf = $self->read_chunk( $start, $end );
-      syswrite $fh, $buf or die "Error writing $name\n";
-      $self->set_a( 1 );
-    }
-    elsif ( $a == 0xFF ) {
-      # Load
-      if ( -f $name ) {
-        open my $fh, '<', $name or die "Can't read $name\n";
-        binmode $fh;
-        my $len = -s $fh;
-        sysread $fh, my $buf, $len or die "Error reading $name\n";
-        $load = PAGE if $exec & 0xFF;
-        $self->write_chunk( $load, $buf );
-        $self->write_32( $blk + 2,  $load );
-        $self->write_32( $blk + 6,  0x00008023 );
-        $self->write_32( $blk + 10, $len );
-        $self->write_32( $blk + 14, 0x00000000 );
-        $self->set_a( 1 );
-      }
-      elsif ( -d $name ) {
-        $self->set_a( 2 );
-      }
-      else {
-        $self->set_a( 0 );
-      }
-    }
-    else {
-      die sprintf( "OSFILE %02x not handled\n", $a );
-    }
-  };
-
-  my $osargs = sub {
-    die "OSARGS not handled\n";
-  };
-
-  my $osbget = sub {
-    die "OSBGET not handled\n";
-  };
-
-  my $osbput = sub {
-    die "OSBPUT not handled\n";
-  };
-
-  my $osgbpb = sub {
-    die "OSGBPB not handled\n";
-  };
-
-  my $osfind = sub {
-    die "OSFIND not handled\n";
-  };
 
   my $make_vector = sub {
     my ( $name, $vec, $code ) = @_;
@@ -259,7 +268,6 @@ __END__
     $self->make_vector( $addr, $vec, $vecno );
   };
 
-  $self->set_jumptab( 0xFA00 );
 
   $make_vector->( 'OSCLI',  0x208, $oscli );
   $make_vector->( 'OSBYTE', 0x20A, $osbyte );
