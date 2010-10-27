@@ -158,7 +158,7 @@ sub _osword {
   elsif ( $a == 0x02 ) {
     # Set clock
     my $tm = $self->read_32( $blk );
-    $time_base = time() - ( $tm * 100 );
+    $self->{ time_base } = time() - ( $tm * 100 );
   }
   else {
     die sprintf( "OSWORD %02x not handled\n", $a );
