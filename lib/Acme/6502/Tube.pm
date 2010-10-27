@@ -66,6 +66,18 @@ sub _BUILD {
 
   $self->write_16( $self->BREAK, 0xFF00 );
 
+  $self->make_vector( 'OSCLI',  0x208, \&_oscli );
+  $self->make_vector( 'OSBYTE', 0x20A, \&_osbyte );
+  $self->make_vector( 'OSWORD', 0x20C, \&_osword );
+  $self->make_vector( 'OSWRCH', 0x20E, \&_oswrch );
+  $self->make_vector( 'OSRDCH', 0x210, \&_osrdch );
+  $self->make_vector( 'OSFILE', 0x212, \&_osfile );
+  $self->make_vector( 'OSARGS', 0x214, \&_osargs );
+  $self->make_vector( 'OSBGET', 0x216, \&_osbget );
+  $self->make_vector( 'OSBPUT', 0x218, \&_osbput );
+  $self->make_vector( 'OSGBPB', 0x21A, \&_osgbpb );
+  $self->make_vector( 'OSFIND', 0x21C, \&_osfind );
+
   $self->set_jumptab( 0xFA00 );
 }
 
@@ -255,44 +267,23 @@ sub osfind {
   die "OSFIND not handled\n";
 }
 
-1;
-__END__
+sub make_vector {
+    my( $self, $name, $vec, $code ) = @_;
 
+    my $addr = $self->$name;
+    my $vecno = scalar @{ $self->{ os } };
+    push @{ $self->{ os } }, [ $code, $name ];
 
-  my $make_vector = sub {
-    my ( $name, $vec, $code ) = @_;
-    my $addr = eval $name;
-    die $@ if $@;
-    my $vecno = scalar @{ $os{$id} };
-    push @{ $os{$id} }, [ $code, $name ];
-    $self->make_vector( $addr, $vec, $vecno );
-  };
-
-
-  $make_vector->( 'OSCLI',  0x208, $oscli );
-  $make_vector->( 'OSBYTE', 0x20A, $osbyte );
-  $make_vector->( 'OSWORD', 0x20C, $osword );
-  $make_vector->( 'OSWRCH', 0x20E, $oswrch );
-  $make_vector->( 'OSRDCH', 0x210, $osrdch );
-  $make_vector->( 'OSFILE', 0x212, $osfile );
-  $make_vector->( 'OSARGS', 0x214, $osargs );
-  $make_vector->( 'OSBGET', 0x216, $osbget );
-  $make_vector->( 'OSBPUT', 0x218, $osbput );
-  $make_vector->( 'OSGBPB', 0x21A, $osgbpb );
-  $make_vector->( 'OSFIND', 0x21C, $osfind );
+    $self->SUPER::make_vector( $addr, $vec, $vecno );
 }
 
 sub call_os {
   my $self = shift;
-  my $id   = ident( $self );
-  my $i    = shift;
+  my $vecno = shift;
 
   eval {
-    my $call = $os{$id}->[$i] || die "Bad OS call $i\n";
-
-    $self->pre_os( $call->[1] );
-    $call->[0]->();
-    $self->post_os( $call->[1] );
+    my $call = $self->{ os }->[ $vecno ] || die "Bad OS call $vecno\n";
+    $call->[ 0 ]->( $self );
   };
 
   if ( $@ ) {
