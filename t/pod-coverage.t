@@ -8,6 +8,6 @@ plan skip_all =>
 all_pod_coverage_ok(
   {
     private =>
-     [ qr{^BUILD|DEMOLISH|AUTOMETHOD|START$}, qr{^_}, qr{call_os} ]
+     [ qr{^BUILD|DEMOLISH|AUTOMETHOD|START$}, qr{^_}, qr{call_os}, qr{make_vector} ]
   }
 );

@@ -182,7 +182,7 @@ sub _oswrch {
   printf( "%c", $self->get_a() );
 }
 
-sub osrdch {
+sub _osrdch {
   my $self = shift;
   Term::ReadKey::ReadMode( 4 );
   eval {
@@ -201,7 +201,7 @@ sub osrdch {
   die $@ if $@;
 }
 
-sub osfile {
+sub _osfile {
   my $self = shift;
   my $a     = $self->get_a();
   my $blk   = $self->get_xy();
@@ -247,23 +247,23 @@ sub osfile {
   }
 }
 
-sub osargs {
+sub _osargs {
   die "OSARGS not handled\n";
 }
 
-sub osbget {
+sub _osbget {
   die "OSBGET not handled\n";
 }
 
-sub osbput {
+sub _osbput {
   die "OSBPUT not handled\n";
 }
 
-sub osgbpb {
+sub _osgbpb {
   die "OSGBPB not handled\n";
 }
 
-sub osfind {
+sub _osfind {
   die "OSFIND not handled\n";
 }
 
