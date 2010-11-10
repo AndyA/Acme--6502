@@ -55,6 +55,8 @@ sub new {
     return $self;
 }
 
+my @OP_CACHE;
+
 sub _BUILD {
     my( $self, $args ) = @_;
 
@@ -70,7 +72,7 @@ sub _BUILD {
 
     my $bad_inst = $self->can( '_bad_inst' );
 
-    $self->{ ops } = [
+    @OP_CACHE = (
         _inst(    # 00 BRK
           _push( '($pc + 1) >> 8', '($pc + 1)' ),
           _push( '$p | B' ),
@@ -335,7 +337,8 @@ sub _BUILD {
         _inst( _sbc( _absx() ) ),                  # FD SBC abs, x
         _inst( _inc( _absx() ) ),                  # FE INC abs, x
         $bad_inst,                                 # FF BBS7 rel
-    ];
+    ) if !@OP_CACHE;
+    $self->{ ops } = [ @OP_CACHE ];
 
     confess "Escape handler opcode not available"
        unless $self->{ ops }->[ ESCAPE_OP ] == $bad_inst;
