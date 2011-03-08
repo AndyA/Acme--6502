@@ -8,7 +8,6 @@ use MyBuilder;
 
 my $builder = MyBuilder->new(
   module_name       => 'Acme::6502',
-  sign              => 1,
   license           => 'perl',
   dist_author       => 'Andy Armstrong <andy@hexten.net>',
   dist_version_from => 'lib/Acme/6502.pm',
