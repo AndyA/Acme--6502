@@ -8,6 +8,7 @@ META.yml
 README
 Roms/Forth-2.5.rom
 t/00.load.t
+t/leak.t
 t/monkeynes.t
 t/monkeynes/script_00.txt
 t/monkeynes/script_01.txt

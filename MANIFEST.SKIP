@@ -29,3 +29,5 @@ Acme-6502-*
 # Makemaker generated files and dirs.
 ^cover_db/
 # Temp, old and emacs backup files.
+^MYMETA\.yml$
+^MYMETA\.json$
