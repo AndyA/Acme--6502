@@ -129,7 +129,7 @@ sub _BUILD {
         _inst( _and( _abs() ) ),       # 2D AND abs
         _inst( _rol( _abs() ) ),       # 2E ROL abs
         $bad_inst,                     # 2F BBR2 rel
-        _inst( _bfnz( _rel(), N ) ),   # 30 BPL rel
+        _inst( _bfnz( _rel(), N ) ),   # 30 BMI rel
         _inst( _and( _zpiy() ) ),      # 31 AND (zp), y
         _inst( _and( _zpi() ) ),       # 32 AND (zp)
         $bad_inst,                     # 33
@@ -199,9 +199,9 @@ sub _BUILD {
         $bad_inst,                                 # 73
         _inst( _sto( _zpx(), '0' ) ),              # 74 STZ zp, x
         _inst( _adc( _zpx() ) ),                   # 75 ADC zp, x
-        _inst( _adc( _zpx() ) ),                   # 76 ROR zp, x
+        _inst( _ror( _zpx() ) ),                   # 76 ROR zp, x
         $bad_inst,                                 # 77
-        _inst( '$p |= I;' ),                       # 78 STI
+        _inst( '$p |= I;' ),                       # 78 SEI
         _inst( _adc( _absy() ) ),                  # 79 ADC abs, y
         _inst( _pop( '$y' ), _status( '$y' ) ),    # 7A PLY
         $bad_inst,                                 # 7B

@@ -54,3 +54,7 @@ Revision history for Acme-6502
 
 0.76    2011-03-08
         Remove Class::Std dependency
+
+0.77    TO BE RELEASED
+        Fixed 0x76 to be proper "ROR zp, x" instruction
+        Fixed some instruction label comments
