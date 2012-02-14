@@ -145,7 +145,7 @@ sub _BUILD {
         _inst( _and( _absx() ) ),      # 3D AND abs, x
         _inst( _rol( _absx() ) ),      # 3E ROL abs, x
         $bad_inst,                     # 3F BBR3 rel
-        _inst( _pop( '$p' ), _rts() ), # 40 RTI
+        _inst( _rti() ),               # 40 RTI
         _inst( _eor( _zpix() ) ),      # 41 EOR (zp, x)
         $bad_inst,                     # 42
         $bad_inst,                     # 43
@@ -853,6 +853,16 @@ sub _jmpi {
 sub _jmpix {
   return 'my $w = ($mem[$pc] | ($mem[$pc + 1] << 8)) + $x; '
    . _jmp_i( '$w' );
+}
+
+sub _rti {
+  return
+     _pop( '$p' )
+   . '$p |= R;'
+   . 'my ($lo, $hi); '
+   . _pop( '$lo' )
+   . _pop( '$hi' )
+   . '$pc = $lo | ($hi << 8);' . "\n";
 }
 
 sub _rts {
