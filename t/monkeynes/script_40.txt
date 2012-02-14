@@ -1,6 +1,6 @@
 # *** MODIFIED TEST FROM ORIGINAL MONKEYNES
 # *** Proper diag info, "IRQ" not "NMI"
-# *** BRK stores PC + 2, RTI goes to PC + 3
+# *** BRK stores PC + 2, RTI goes to adress from stack
 clear
 power on
 regs
@@ -33,9 +33,9 @@ test m:01fd = f2
 # Now for the RTI ----------------
 op 40
 
-# Should be: PC=8003, I=0, B=1
+# Should be: PC=8002, I=0, B=1
 # SP=FF, PS=F2
-test pc = 8003
+test pc = 8002
 test i = 0
 test b = 1
 test sp = ff
