@@ -178,7 +178,7 @@ sub _BUILD {
         _inst( _lsr( _absx() ) ),      # 5E LSR abs, x
         $bad_inst,                     # 5F BBR5 rel
         _inst( _rts() ),               # 60 RTS
-        _inst( _adc( _zpx() ) ),       # 61 ADC zp, x
+        _inst( _adc( _zpix() ) ),      # 61 ADC (zp, x)
         $bad_inst,                     # 62
         $bad_inst,                     # 63
         _inst( _sto( _zp(), '0' ) ),   # 64 STZ zp
