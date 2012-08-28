@@ -4,7 +4,7 @@ use warnings FATAL => 'all';
 use strict;
 use Carp;
 
-our $VERSION = '0.76';
+our $VERSION = '0.77';
 
 # CPU flags
 use constant {
@@ -1095,7 +1095,7 @@ Brian Cassidy C<< <bricas@cpan.org> >>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2006-2010, Andy Armstrong C<< <andy@hexten.net> >>. All
+Copyright (c) 2006-2012, Andy Armstrong C<< <andy@hexten.net> >>. All
 rights reserved.
 
 This module is free software; you can redistribute it and/or
