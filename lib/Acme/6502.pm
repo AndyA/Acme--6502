@@ -943,7 +943,7 @@ Read the current value of the processor X index register.
 
 =item C<get_y()>
 
-Read the current value of the processor X index register.
+Read the current value of the processor Y index register.
 
 =item C<get_xy()>
 
